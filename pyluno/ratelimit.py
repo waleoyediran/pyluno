@@ -11,6 +11,9 @@ def RateLimiter(f):
     def wrapper(*args, **kwargs):
         maxPerSecond = args[0].maxRate
         burst = args[0].maxBurst
+        if (maxPerSecond is None) or (burst is None):
+            ret = f(*args, **kwargs)
+            return ret
         minInterval = 1.0 / float(maxPerSecond)
         if burstCount[0] == 0:
             firstBurst[0] = time.time()
