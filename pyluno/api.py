@@ -60,11 +60,7 @@ class Luno:
         # Use a Requests session so that we can keep headers and connections
         # across API requests
         self._requests_session = requests.Session()
-        self._requests_session.headers.update({
-            'Accept': 'application/json',
-            'Accept-Charset': 'utf-8',
-            'User-Agent': 'py-bitx v' + __version__
-        })
+        self._requests_session.headers.update(self.headers)
         self._executor = ThreadPoolExecutor(max_workers=5)
 
     def close(self):
