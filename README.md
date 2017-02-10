@@ -19,13 +19,13 @@ Where `options` is  dictions and can have any of the following keys and associat
 
 | option key   | description      | default |
 |--------------|------------------|---------|
-|hostname | the API host | api.myluno.com |
-|port | the TCP port to attach to | 443 |
-|pair | The currency pair to provide results for | XBTZAR |
-|ca | The root certificate | None |
-|timeout | The maximum time to wait for requests | 30 (s) |
-|maxRate | The maximum number of calls per second. Set to None to deactivate | 1|
-|maxBurst | Number of call that can be made without being rate limited. After this number is exceeded the accumulated time is waited. Set to 1 to deactivate bursts. Irrelevant if maxRate is None | 5 |
+| hostname | the API host | api.myluno.com |
+| port | the TCP port to attach to | 443 |
+| pair | The currency pair to provide results for | XBTZAR |
+| ca | The root certificate | None |
+| timeout | The maximum time to wait for requests | 30 (s) |
+| maxRate | The maximum number of calls per second. Set to None to deactivate |  1 |
+| maxBurst | Number of call that can be made without being rate limited. After this number is exceeded the accumulated time is waited. Set to 1 to deactivate bursts. Irrelevant if maxRate is None | 5 |
 
 ## API calls
 
@@ -49,5 +49,5 @@ accelerate the development of this code
 
 # To Do
 
--  Tests for some of the newly added endpoints
--  Tests for the rate limiter
+-   Tests for some of the newly added endpoints
+-   Tests for the rate limiter

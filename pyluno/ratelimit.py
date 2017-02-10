@@ -5,8 +5,7 @@ log = logging.getLogger(__name__)
 
 
 def RateLimiter(f):
-    burstCount = [0]
-    firstBurst = [0.0]
+    burstCount, firstBurst = ([0], [0.0])
 
     def wrapper(*args, **kwargs):
         maxPerSecond = args[0].maxRate
@@ -23,7 +22,7 @@ def RateLimiter(f):
         if burstCount[0] == burst:
             burstCount[0] = 0
             elapsed = time.time() - firstBurst[0]
-            leftToWait = + burst*minInterval - elapsed
+            leftToWait = burst*minInterval - elapsed
             if leftToWait > 0:
                 log.warning('Rate limited! Waiting {:.2f}s'.format(leftToWait))
                 time.sleep(leftToWait)
