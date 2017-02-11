@@ -3,8 +3,7 @@ Luno API for python
 
 # Installation
 
-1.  Clone repo
-2.  pip install it
+`pip install pyluno`
 
 # Usage
 

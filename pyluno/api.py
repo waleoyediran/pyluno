@@ -5,11 +5,10 @@ import json
 import logging
 import pandas as pd
 import requests
-
-from .meta import version
+from . import meta
 from .ratelimit import RateLimiter
 
-__version__ = version
+__version__ = meta.__version__
 
 log = logging.getLogger(__name__)
 

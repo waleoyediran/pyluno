@@ -36,10 +36,9 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3 :: Only'
     ],
     test_suite='tests',
-    tests_require=[
-        'requests-mock>=0.7.0'
-    ]
+    extras_require={
+        'test':  ['requests-mock>=0.7.0', 'nose'],
+        }
 )
