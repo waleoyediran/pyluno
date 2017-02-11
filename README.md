@@ -3,6 +3,8 @@ Luno API for python
 
 Master: [![Build Status Master](https://travis-ci.org/grantstephens/pyluno.svg?branch=master)](https://travis-ci.org/grantstephens/pyluno)
 
+Coverage: [![Coverage Status](https://coveralls.io/repos/github/grantstephens/pyluno/badge.svg)](https://coveralls.io/github/grantstephens/pyluno)
+
 Develop: [![Build Status Develop](https://travis-ci.org/grantstephens/pyluno.svg?branch=develop)](https://travis-ci.org/grantstephens/pyluno)
 
 # Installation

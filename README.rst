@@ -5,6 +5,8 @@ Luno API for python
 
 Master: |Build Status Master|
 
+Coverage: |Coverage Status|
+
 Develop: |Build Status Develop|
 
 Installation
@@ -116,5 +118,7 @@ Contribute
 
 .. |Build Status Master| image:: https://travis-ci.org/grantstephens/pyluno.svg?branch=master
    :target: https://travis-ci.org/grantstephens/pyluno
+.. |Coverage Status| image:: https://coveralls.io/repos/github/grantstephens/pyluno/badge.svg
+   :target: https://coveralls.io/github/grantstephens/pyluno
 .. |Build Status Develop| image:: https://travis-ci.org/grantstephens/pyluno.svg?branch=develop
    :target: https://travis-ci.org/grantstephens/pyluno
