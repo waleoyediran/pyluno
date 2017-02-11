@@ -1,1 +1,8 @@
-version = "0.1.12dev1"
+version = "0.2.0"
+
+"""
+Changelog:
+0.2- Name change and added endpoints market orders, make account,
+    plus various other bug fixes. Also added rate limiting fuctionality.
+
+"""
