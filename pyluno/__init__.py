@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from . import meta
 import logging
 
-__version__ = meta.version
+__version__ = meta.__version__
 
 try:  # Python 2.7+
     from logging import NullHandler

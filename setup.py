@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-with open('datasquirrel/meta.py') as f:
+with open('pyluno/meta.py') as f:
     exec(f.read())
 
 setup(
