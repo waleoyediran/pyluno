@@ -10,8 +10,12 @@ python:
 install:
 - pip install --upgrade pip
 - pip install .[test]
+- pip install coveralls
 script:
 - nosetests
+- coverage run --source=pyluno setup.py test
+after_success:
+  coveralls
 deploy:
   provider: pypi
   user: grantstephens
