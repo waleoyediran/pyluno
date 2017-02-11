@@ -20,6 +20,7 @@ def RateLimiter(f):
             burstCount[0] += 1
             ret = f(*args, **kwargs)
         if burstCount[0] == burst:
+            ret = f(*args, **kwargs)
             burstCount[0] = 0
             elapsed = time.time() - firstBurst[0]
             leftToWait = burst*minInterval - elapsed

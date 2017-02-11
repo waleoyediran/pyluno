@@ -4,18 +4,19 @@ Luno API for python
 Master: [![Build Status Master](https://travis-ci.org/grantstephens/pyluno.svg?branch=master)](https://travis-ci.org/grantstephens/pyluno)
 
 Develop: [![Build Status Develop](https://travis-ci.org/grantstephens/pyluno.svg?branch=develop)](https://travis-ci.org/grantstephens/pyluno)
+
 # Installation
 
-`pip install pyluno`
+    pip install pyluno
 
 # Usage
 
-See the [tests](tests/) for detailed usage examples, but basically:
+See the tests for detailed usage examples, but basically:
 
 ## API object creation
 
     from pyluno.api import Luno
-    api = Luno(key, secret. options)
+    api = Luno(key, secret, options)
 
 Where `options` is  dictions and can have any of the following keys and associated values:
 
@@ -43,13 +44,24 @@ Where `options` is  dictions and can have any of the following keys and associat
 
 **Returns**: dictionary containing the latest ticker values for all currency pairs
 
+# Known Issues
+
+-   Rates published on the Luno website aren't accurate- your milliage may vary
+-   Not all error handling has been handled
+
 # Acknowledgements
 
-A nod to @bausmeier/node-luno for the node.js version, which helped
-accelerate the development of this code
-
+This repo was called pybitc and made by @CjS77. It has since been updated
+and adapted and gone though a name change
 
 # To Do
 
--   Tests for some of the newly added endpoints
+-   Tests for some of the endpoints needing dynamic reponses
 -   Tests for the rate limiter
+
+
+# Contribute
+
+-  Fork it
+-  Contribute
+-  Be Awesome

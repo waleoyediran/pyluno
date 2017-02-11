@@ -3,8 +3,10 @@ import requests_mock
 from pyluno import api
 from pyluno.api import Luno, LunoAPIError
 import base64
+import pandas as pd
 
 
+# time.timestam
 class TestLuno(unittest.TestCase):
     def testConstructor(self):
         api = Luno('', '', {})
@@ -185,6 +187,12 @@ class TestAPICalls(unittest.TestCase):
                 }
             ]
         })
+        result = self.api.get_order_book_frame()
+        self.assertDictEqual(
+            result.bids.to_dict(),
+            {'volume': {0: '0.10', 1: '0.10', 2: '0.10'},
+             'price': {0: '1100.00', 1: '1000.00', 2: '900.00'}}
+            )
 
     @requests_mock.Mocker()
     def testTrades(self, m):
@@ -203,10 +211,59 @@ class TestAPICalls(unittest.TestCase):
             ]
         }
         m.get('https://api.dummy.com/api/1/trades', json=response)
-        result = self.api.get_trades()
+        result = self.api.get_trades(since=123)
         self.assertDictEqual(result, response)
         result = self.api.get_trades(1)
         self.assertDictEqual(result, {"trades": [response['trades'][0]]})
+        result = self.api.get_trades_frame(1)
+        self.assertDictEqual(
+            result.to_dict(),
+            {'price': {pd.Timestamp('2013-04-15 19:03:41.774000'): 1000.0},
+             'volume': {pd.Timestamp('2013-04-15 19:03:41.774000'):
+                        0.10000000000000001}}
+            )
+        response = {'trades': []}
+        m.get('https://api.dummy.com/api/1/trades', json=response)
+        result = self.api.get_trades_frame(1)
+        self.assertTrue(result.empty)
+
+    @requests_mock.Mocker()
+    def testListTrades(self, m):
+        response = {
+            "trades": [
+                {
+                    "base": "0.147741",
+                    "counter": "1549.950831",
+                    "fee_base": "0.00",
+                    "fee_counter": "0.00",
+                    "is_buy": False,
+                    "order_id": "BXMC2CJ7HNB88U4",
+                    "pair": "XBTZAR",
+                    "price": "10491.00",
+                    "timestamp": 1467138492909,
+                    "type": "BID",
+                    "volume": "0.147741"
+                }
+            ]
+        }
+        m.get('https://api.dummy.com/api/1/listtrades', json=response)
+        result = self.api.list_trades(since=123)
+        self.assertDictEqual(result, response)
+        result = self.api.list_trades(1)
+        self.assertDictEqual(result, {"trades": [response['trades'][0]]})
+        result = self.api.list_trades_frame()
+        d_comp = {pd.Timestamp('2016-06-28 18:28:12.909000'):
+                  {'fee_counter': '0.00', 'fee_base': 0.0,
+                   'pair': 'XBTZAR', 'counter': 1549.950831,
+                   'is_buy': False, 'price': 10491.0, 'type': 'BID',
+                   'order_id': 'BXMC2CJ7HNB88U4', 'volume': 0.147741,
+                   'base': 0.147741}}
+        self.assertDictEqual(
+            result.T.to_dict(), d_comp)
+        response = {'trades': []}
+        m.get('https://api.dummy.com/api/1/listtrades', json=response)
+        result = self.api.list_trades_frame(1)
+        self.assertTrue(result.empty)
 
     @requests_mock.Mocker()
     def testListOrdersAuth(self, m):
@@ -233,6 +290,17 @@ class TestAPICalls(unittest.TestCase):
         m.get(url, json=response, headers={'Authorization': self.auth_string})
         result = self.api.get_orders()
         self.assertDictEqual(result, response)
+        result = self.api.get_orders_frame()
+
+        d_comp = {pd.Timestamp('2015-02-15 08:52:07.333000'):
+                  {'limit_volume': 0.027496,
+                   'creation_timestamp':
+                   pd.Timestamp('2015-02-15 08:52:07.333000'),
+                   'type': 'ASK', 'limit_price': 2951, 'state': 'COMPLETE',
+                   'fee_counter': 0, 'pair': 'XBTZAR', 'base': 0.027496,
+                   'expiration_timestamp': 0, 'fee_base': 0,
+                   'counter': 81.140696, 'order_id': 'BXF3J88PZAYGXH7'}}
+        self.assertDictEqual(result.T.to_dict(), d_comp)
 
     @requests_mock.Mocker()
     def testListOrdersUnAuth(self, m):
@@ -393,6 +461,12 @@ class TestAPICalls(unittest.TestCase):
         result = self.api.get_transactions('319232323', 2, 2)
         self.assertDictEqual(result,
                              {"id": "319232323", "transactions": [trec[1]]})
+        result = self.api.get_transactions_frame('319232323', 2, 2)
+        d_comp = {pd.Timestamp('2015-04-24 20:51:41'):
+                  {'row_index': 1, 'description': 'Bought 0.1 BTC',
+                   'balance_delta': 0.1, 'currency': 'XBT',
+                   'balance': 0.1, 'available': 0.1, 'available_delta': 0.1}}
+        self.assertDictEqual(result.T.to_dict(), d_comp)
 
     @requests_mock.Mocker()
     def testPending(self, m):
@@ -429,6 +503,32 @@ class TestAPICalls(unittest.TestCase):
         self.assertEqual(data['volume'], '0.1')
         self.assertEqual(data['price'], '500')
         self.assertDictEqual(result, response)
+
+    @requests_mock.Mocker()
+    def testCreateMarketOrder(self, m):
+        response = {
+            "order_id": "BXMC2CJ7HNB88U4"
+        }
+        url = 'https://api.dummy.com/api/1/marketorder'
+        m.post(url, json=response, headers={'Authorization': self.auth_string})
+        result = self.api.create_market_order('buy', 0.1)
+        data = {s.split('=')[0]: s.split('=')[1]
+                for s in m.request_history[0].text.split('&')}
+        self.assertEqual(data['pair'], 'XBTZAR')
+        self.assertEqual(data['volume'], '0.1')
+        self.assertDictEqual(result, response)
+
+    @requests_mock.Mocker()
+    def testCreateCreateAccount(self, m):
+        response = {
+          "id": "319323232",
+          "name": "Moon",
+          "currency": "XBT"
+        }
+        url = 'https://api.dummy.com/api/1/accounts'
+        m.post(url, json=response, headers={'Authorization': self.auth_string})
+        result = self.api.create_account('XBT', 'Moon')
+        self.assertDictEqual(result, result)
 
 
 def main():
