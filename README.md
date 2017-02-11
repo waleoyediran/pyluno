@@ -1,6 +1,7 @@
 # pyluno
 Luno API for python
-
+[![Build Status Master](https://travis-ci.org/grantstephens/pyluno.svg?branch=master)](https://travis-ci.org/grantstephens/pyluno)
+[![Build Status Develop](https://travis-ci.org/grantstephens/pyluno.svg?branch=develop)](https://travis-ci.org/grantstephens/pyluno)
 # Installation
 
 `pip install pyluno`
