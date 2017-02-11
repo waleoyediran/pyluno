@@ -89,7 +89,8 @@ class TestAPICalls(unittest.TestCase):
             'Accept-Charset': 'utf-8',
             'User-Agent': 'py-luno v' + api.__version__
         }
-        m.get('https://api.dummy.com/api/1/ticker?pair=XBTZAR', json={'success': True}, headers=headers)
+        m.get('https://api.dummy.com/api/1/ticker?pair=XBTZAR',
+              json={'success': True}, headers=headers)
         result = self.api.get_ticker()
         self.assertTrue(result['success'])
 
@@ -108,7 +109,8 @@ class TestAPICalls(unittest.TestCase):
 
     @requests_mock.Mocker()
     def testInvalidTickerCall(self, m):
-        response = {"error": "Invalid currency pair.", "error_code": "ErrInvalidPair"}
+        response = {"error": "Invalid currency pair.",
+                    "error_code": "ErrInvalidPair"}
         m.get('https://api.dummy.com/api/1/ticker', json=response)
         url = 'https://api.dummy.com/api/1/ticker'
         try:
@@ -121,11 +123,14 @@ class TestAPICalls(unittest.TestCase):
     @requests_mock.Mocker()
     def testAllTickers(self, m):
         response = {"tickers": [
-            {"timestamp": 1448572753005, "bid": "72630.00", "ask": "78345.00", "last_trade": "72630.00",
+            {"timestamp": 1448572753005, "bid": "72630.00", "ask": "78345.00",
+             "last_trade": "72630.00",
              "rolling_24_hour_volume": "0.00", "pair": "XBTNGN"},
-            {"timestamp": 1448572752955, "bid": "1451.00", "ask": "1465.00", "last_trade": "1453.00",
+            {"timestamp": 1448572752955, "bid": "1451.00", "ask": "1465.00",
+             "last_trade": "1453.00",
              "rolling_24_hour_volume": "155.025742", "pair": "XBTMYR"},
-            {"timestamp": 1448572752983, "bid": "4899.00", "ask": "4900.00", "last_trade": "4900.00",
+            {"timestamp": 1448572752983, "bid": "4899.00", "ask": "4900.00",
+             "last_trade": "4900.00",
              "rolling_24_hour_volume": "142.516363", "pair": "XBTZAR"}
         ]}
         m.get('https://api.dummy.com/api/1/tickers', json=response)
@@ -201,7 +206,7 @@ class TestAPICalls(unittest.TestCase):
         result = self.api.get_trades()
         self.assertDictEqual(result, response)
         result = self.api.get_trades(1)
-        self.assertDictEqual(result, {"trades": [response['trades'][0]]} )
+        self.assertDictEqual(result, {"trades": [response['trades'][0]]})
 
     @requests_mock.Mocker()
     def testListOrdersAuth(self, m):
@@ -274,8 +279,10 @@ class TestAPICalls(unittest.TestCase):
 
     @requests_mock.Mocker()
     def testFundingAddresses(self, m):
-        response = {"asset": "XBT", "address": "1GVZeHQVCkJfKLz2pL5LiPeAKwdMXrgoNs", "name": "",
-                    "account_id": "123456", "assigned_at": 1412659801000, "total_received": "0.67",
+        response = {"asset": "XBT",
+                    "address": "1GVZeHQVCkJfKLz2pL5LiPeAKwdMXrgoNs",
+                    "name": "", "account_id": "123456",
+                    "assigned_at": 1412659801000, "total_received": "0.67",
                     "total_unconfirmed": "0.00"}
         url = 'https://api.dummy.com/api/1/funding_address?asset=XBT'
         m.get(url, json=response, headers={'Authorization': self.auth_string})
@@ -361,19 +368,31 @@ class TestAPICalls(unittest.TestCase):
             }
         ]
         url = 'https://api.dummy.com/api/1/accounts/319232323/transactions'
-        m.get(url, json={"id": "319232323", "transactions": trec}, headers={'Authorization': self.auth_string})
-        m.get(url+'?max_row=1', json={"id": "319232323", "transactions": [trec[0]]}, headers={'Authorization': self.auth_string})
-        m.get(url+'?min_row=2', json={"id": "319232323", "transactions": [trec[1]]}, headers={'Authorization': self.auth_string})
+        m.get(url, json={"id": "319232323", "transactions": trec},
+              headers={'Authorization': self.auth_string})
+        m.get(url+'?max_row=1',
+              json={"id": "319232323",
+                    "transactions": [trec[0]]},
+              headers={'Authorization': self.auth_string})
+        m.get(url+'?min_row=2',
+              json={"id": "319232323",
+                    "transactions": [trec[1]]},
+              headers={'Authorization': self.auth_string})
         result = self.api.get_transactions('319232323')
-        self.assertDictEqual(result, {"id": "319232323", "transactions": trec})
+        self.assertDictEqual(result,
+                             {"id": "319232323", "transactions": trec})
         result = self.api.get_transactions('319232323', max_row=1)
-        self.assertDictEqual(result, {"id": "319232323", "transactions": [trec[0]]})
+        self.assertDictEqual(result,
+                             {"id": "319232323", "transactions": [trec[0]]})
         result = self.api.get_transactions('319232323', 1, 1)
-        self.assertDictEqual(result, {"id": "319232323", "transactions": [trec[0]]})
+        self.assertDictEqual(result,
+                             {"id": "319232323", "transactions": [trec[0]]})
         result = self.api.get_transactions('319232323', min_row=2)
-        self.assertDictEqual(result, {"id": "319232323", "transactions": [trec[1]]})
+        self.assertDictEqual(result,
+                             {"id": "319232323", "transactions": [trec[1]]})
         result = self.api.get_transactions('319232323', 2, 2)
-        self.assertDictEqual(result, {"id": "319232323", "transactions": [trec[1]]})
+        self.assertDictEqual(result,
+                             {"id": "319232323", "transactions": [trec[1]]})
 
     @requests_mock.Mocker()
     def testPending(self, m):
@@ -404,7 +423,8 @@ class TestAPICalls(unittest.TestCase):
         url = 'https://api.dummy.com/api/1/postorder'
         m.post(url, json=response, headers={'Authorization': self.auth_string})
         result = self.api.create_limit_order('buy', 0.1, 500)
-        data = {s.split('=')[0]:s.split('=')[1] for s in m.request_history[0].text.split('&')}
+        data = {s.split('=')[0]: s.split('=')[1]
+                for s in m.request_history[0].text.split('&')}
         self.assertEqual(data['pair'], 'XBTZAR')
         self.assertEqual(data['volume'], '0.1')
         self.assertEqual(data['price'], '500')

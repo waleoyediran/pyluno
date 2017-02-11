@@ -1,9 +1,9 @@
 # pyluno
 Luno API for python
 
-Master:[![Build Status Master](https://travis-ci.org/grantstephens/pyluno.svg?branch=master)](https://travis-ci.org/grantstephens/pyluno)
+Master: [![Build Status Master](https://travis-ci.org/grantstephens/pyluno.svg?branch=master)](https://travis-ci.org/grantstephens/pyluno)
 
-Develop:[![Build Status Develop](https://travis-ci.org/grantstephens/pyluno.svg?branch=develop)](https://travis-ci.org/grantstephens/pyluno)
+Develop: [![Build Status Develop](https://travis-ci.org/grantstephens/pyluno.svg?branch=develop)](https://travis-ci.org/grantstephens/pyluno)
 # Installation
 
 `pip install pyluno`
@@ -21,7 +21,7 @@ Where `options` is  dictions and can have any of the following keys and associat
 
 | option key   | description      | default |
 |--------------|------------------|---------|
-| hostname | the API host | api.myluno.com |
+| hostname | the API host | api.mybitx.com |
 | port | the TCP port to attach to | 443 |
 | pair | The currency pair to provide results for | XBTZAR |
 | ca | The root certificate | None |
