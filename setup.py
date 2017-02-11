@@ -8,7 +8,7 @@ setup(
     packages=find_packages(exclude=['tests']),
     description='A Luno API for Python',
     author='Cayle Sharrock/Grant Stephens',
-    author_email='cayle@nimbustech.biz/Grant Stephens',
+    author_email='grant@stephens.co.za',
     scripts=['demo.py'],
     install_requires=[
         'futures>=3.0.3',
@@ -22,7 +22,7 @@ setup(
         % (__version__, ),
     keywords='Luno Bitcoin exchange API',
     classifiers=[
-        'Development Status :: 5 - Stable',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Topic :: Office/Business :: Financial',
