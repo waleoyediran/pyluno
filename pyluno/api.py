@@ -418,7 +418,6 @@ class Luno:
         result = self.api_request('send', params=data, http_call='post')
         return result
 
-
     def transfer(self, amount, currency, note,
                  source_account_id, target_account_id):
         """Transfer currency between accounts."""
@@ -429,10 +428,12 @@ class Luno:
             'source_account_id': source_account_id,
             'target_account_id': target_account_id,
         }
-        result_req = self.api_request('transfers', params=data, http_call='post')
+        result_req = self.api_request('transfers', params=data,
+                                      http_call='post')
         tx_id = result_req['id']
         data = tx_id
-        result_app = self.api_request('transfers', params=data, http_call='put')
+        result_app = self.api_request('transfers', params=data,
+                                      http_call='put')
         return [result_req, result_app]
 
     def get_quote(self, ttype, base_amount, pair):
