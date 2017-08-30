@@ -100,6 +100,9 @@ class Luno:
         elif http_call == 'post':
             response = self._requests_session.post(
                 url, data=params, auth=auth, timeout=self.timeout)
+        elif http_call == 'put':
+            response = self._requests_session.put(
+                url+'/'+params, auth=auth, timeout=self.timeout)
         else:
             raise ValueError('Invalid http_call parameter')
         try:
@@ -411,3 +414,20 @@ class Luno:
         }
         result = self.api_request('send', params=data, http_call='post')
         return result
+
+
+    def transfer(self, amount, currency, note,
+                 source_account_id, target_account_id):
+        """Transfer currency between accounts."""
+        data = {
+            'amount': amount,
+            'currency': currency,
+            'note': note,
+            'source_account_id': source_account_id,
+            'target_account_id': target_account_id,
+        }
+        result_req = self.api_request('transfers', params=data, http_call='post')
+        tx_id = result_req['id']
+        data = tx_id
+        result_app = self.api_request('transfers', params=data, http_call='put')
+        return [result_req, result_app]
