@@ -391,3 +391,23 @@ class Luno:
         """
         data = {'id': wid}
         return self.api_request('withdrawals', params=data)
+
+    def delete_withdrawal_request(self, wid):
+        """Delete a new withdrawal request."""
+        data = {'id': wid}
+        result = self.api_request('withdrawals',
+                                  params=data, http_call='delete')
+        return result
+
+    def send_bitcoin(self, amount, currency, address,
+                     description=None, message=None):
+        """Send currency to account."""
+        data = {
+            'amount': amount,
+            'currency': currency,
+            'address': address,
+            'description': description,
+            'message': message,
+        }
+        result = self.api_request('send', params=data, http_call='post')
+        return result
