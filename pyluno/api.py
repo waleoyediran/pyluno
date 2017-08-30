@@ -103,6 +103,9 @@ class Luno:
         elif http_call == 'put':
             response = self._requests_session.put(
                 url+'/'+params, auth=auth, timeout=self.timeout)
+        elif http_call == 'delete':
+            response = self._requests_session.delete(
+                url, param=params, auth=auth, timeout=self.timeout)
         else:
             raise ValueError('Invalid http_call parameter')
         try:
@@ -431,3 +434,32 @@ class Luno:
         data = tx_id
         result_app = self.api_request('transfers', params=data, http_call='put')
         return [result_req, result_app]
+
+    def get_quote(self, ttype, base_amount, pair):
+        """Get temporary quote."""
+        data = {
+            'type': ttype,
+            'base_amount': base_amount,
+            'pair': pair,
+        }
+        result = self.api_request('quotes', params=data, http_call='post')
+        return result
+
+    def get_quote_status(self, wid):
+        """Get status of a specific quote."""
+        data = {'id': wid}
+        result = self.api_request('quotes',
+                                  params=data)
+        return result
+
+    def execute_quote(self, wid):
+        """Execute trade based on quote."""
+        data = {'id': wid}
+        result = self.api_request('quotes', params=data, http_call='put')
+        return result
+
+    def delete_quote(self, wid):
+        """Delete quote."""
+        data = {'id': wid}
+        result = self.api_request('quotes', params=data, http_call='delete')
+        return result

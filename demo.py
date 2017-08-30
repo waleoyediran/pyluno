@@ -1,6 +1,7 @@
-from pyluno.api import Luno
 import os
 import pprint
+
+from pyluno.api import Luno
 
 pp = pprint.PrettyPrinter(indent=4, width=80)
 
