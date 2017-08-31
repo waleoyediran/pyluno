@@ -8,42 +8,20 @@ import pandas as pd
 import requests
 
 from . import meta
-from .ratelimit import RateLimiter
+from .accounts import Account
+from .market import Market
+from .utils import LunoAPIError, LunoAPIRateLimitError, RateLimiter
 
 __version__ = meta.__version__
 
 log = logging.getLogger(__name__)
 
-# --------------------------- constants -----------------------
 
+class Luno():
+    """Main Luno API class."""
 
-class LunoAPIError(ValueError):
-    """Generic Error Class"""
-    def __init__(self, response):
-        self.url = response.url
-        self.code = response.status_code
-        self.message = response.text
-
-    def __str__(self):
-        return "Luno request %s failed with %d: %s" % (
-            self.url, self.code, self.message)
-
-
-class LunoAPIRateLimitError(ValueError):
-    """Generic rate limit error class."""
-    def __init__(self, response):
-        self.url = response.url
-        self.code = response.status_code
-        self.message = response.text
-
-    def __str__(self):
-        return "Rate Limit Error.\nLuno request %s failed with %d: %s" % (
-            self.url, self.code, self.message)
-
-
-class Luno:
-    """Main Luno API class"""
     def __init__(self, key, secret, options={}):
+        """Instantiate with key and secret if authentication is wanted."""
         self.options = options
         self.auth = (key, secret)
         if 'hostname' in options:
@@ -66,6 +44,9 @@ class Luno:
         self._requests_session = requests.Session()
         self._requests_session.headers.update(self.headers)
         self._executor = ThreadPoolExecutor(max_workers=5)
+        self.market = Market(self)
+        self.account = Account(self)
+
 
     def close(self):
         """Close connection."""
@@ -105,7 +86,7 @@ class Luno:
                 url+'/'+params, auth=auth, timeout=self.timeout)
         elif http_call == 'delete':
             response = self._requests_session.delete(
-                url, param=params, auth=auth, timeout=self.timeout)
+                url+'/'+params, auth=auth, timeout=self.timeout)
         else:
             raise ValueError('Invalid http_call parameter')
         try:
@@ -119,128 +100,6 @@ class Luno:
             raise LunoAPIError(response)
         else:
             return result
-
-    def get_ticker(self, kind='auth', pair=None):
-        """Get the latest ticker indicator for a pair."""
-        params = {'pair': self.pair if pair is None else pair}
-        return self.api_request('ticker', params, kind=kind)
-
-    def get_all_tickers(self, kind='auth'):
-        """Get all the latest ticker indicators."""
-        return self.api_request('tickers', None, kind=kind)
-
-    def get_order_book(self, limit=None, kind='auth', pair=None):
-        """Get a list of bids and asks in the order book."""
-        params = {'pair': self.pair if pair is None else pair}
-        orders = self.api_request('orderbook', params, kind=kind)
-        if limit is not None:
-            orders['bids'] = orders['bids'][:limit]
-            orders['asks'] = orders['asks'][:limit]
-        return orders
-
-    def get_order_book_frame(self, limit=None, kind='auth', pair=None):
-        """Get orderbook as a dataframe."""
-        q = self.get_order_book(limit, kind, pair)
-        asks = pd.DataFrame(q['asks'])
-        bids = pd.DataFrame(q['bids'])
-        index = pd.MultiIndex.from_product(
-            [('asks', 'bids'), ('price', 'volume')])
-        df = pd.DataFrame(
-            pd.concat([asks, bids], axis=1).values, columns=index)
-        return df
-
-    def get_trades(self, limit=None, kind='auth', since=None, pair=None):
-        """Get a list of the most recent trades."""
-        params = {'pair': self.pair if pair is None else pair}
-        if since is not None:
-            params['since'] = since
-        trades = self.api_request('trades', params, kind=kind)
-        if limit is not None:
-            trades['trades'] = trades['trades'][:limit]
-        return trades
-
-    def get_trades_frame(self, limit=None, kind='auth', since=None, pair=None):
-        """Get a dataframe of the most recent trades."""
-        trades = self.get_trades(limit, kind, since, pair)
-        df = pd.DataFrame(trades['trades'])
-        if not df.empty:
-            df.index = pd.to_datetime(df.timestamp, unit='ms')
-            df.price = df.price.apply(pd.to_numeric)
-            df.volume = df.volume.apply(pd.to_numeric)
-            df.drop('timestamp', axis=1, inplace=True)
-        else:
-            log.warning('Empty response from get_trades. Returning empty df')
-        return df
-
-    def create_account(self, currency, name, base_account_id, counter_id):
-        """Create a new account in the selected currency.
-
-        :param currency: Currency of account
-        :param name: Name of account
-        :param base_account_id: Id of the base account
-        :param counter_id: Id of the counter account
-        :return: dict with name. currency and id of new account
-        """
-        data = {
-            'currency': currency,
-            'name': name,
-            'base_account_id': base_account_id,
-            'counter_id': counter_id
-        }
-        return self.api_request('accounts', params=data, http_call='post')
-
-    def get_balance(self):
-        """Get balances of all accounts."""
-        return self.api_request('balance', None)
-
-    def get_transactions(self, account_id, min_row=None, max_row=None):
-        """Get list of transactions for an account."""
-        params = {}
-        if min_row is not None:
-            params['min_row'] = min_row
-        if max_row is not None:
-            params['max_row'] = max_row
-        return self.api_request(
-            'accounts/%s/transactions' % (account_id,), params)
-
-    def get_transactions_frame(self, account_id, min_row=None, max_row=None):
-        """Get dataframe of transactions for an account."""
-        tx = self.get_transactions(
-            account_id, min_row, max_row)['transactions']
-        df = pd.DataFrame(tx)
-        df.index = pd.to_datetime(df.timestamp, unit='ms')
-        df.drop('timestamp', axis=1, inplace=True)
-        return df
-
-    def get_pending_transactions(self, account_id):
-        """Get a list of pending transactions for an account."""
-        return self.api_request('accounts/%s/pending' % (account_id,), None)
-
-    def get_orders(self, state=None, kind='auth', pair=None):
-        """Get a list of most recently placed orders.
-
-        You can specify an optional state='PENDING' parameter to
-        restrict the results to only open orders. You can also specify the
-            market by using the optional pair parameter.
-        The list is truncated after 100 items.
-        :param kind: typically 'auth' if you want this to return anything
-            useful
-        :param state: String optional 'COMPLETE', 'PENDING', or None (default)
-        :return:
-        """
-        params = {'pair': self.pair if pair is None else pair}
-        if state is not None:
-            params['state'] = state
-        return self.api_request('listorders', params, kind=kind)
-
-    def get_orders_frame(self, state=None, kind='auth', pair=None):
-        """Get a list of most recently placed orders as a dataframe."""
-        q = self.get_orders(state, kind, pair)
-        tj = json.dumps(q['orders'])
-        df = pd.read_json(
-            tj, convert_dates=['creation_timestamp', 'expiration_timestamp'])
-        df.index = df.creation_timestamp
-        return df
 
     def create_limit_order(self, order_type, volume, price):
         """Create a new limit order.
