@@ -1,3 +1,4 @@
+"""Markets module."""
 import logging
 
 import pandas as pd
@@ -6,8 +7,10 @@ log = logging.getLogger(__name__)
 
 
 class Market(object):
+    """Market related methods."""
 
     def __init__(self, main):
+        """Initialise with super's main."""
         self.main = main
 
     def get_ticker(self, kind='auth', pair=None):
@@ -30,7 +33,7 @@ class Market(object):
 
     def get_order_book_frame(self, limit=None, kind='auth', pair=None):
         """Get orderbook as a dataframe."""
-        q = self.main.get_order_book(limit, kind, pair)
+        q = self.get_order_book(limit, kind, pair)
         asks = pd.DataFrame(q['asks'])
         bids = pd.DataFrame(q['bids'])
         index = pd.MultiIndex.from_product(
@@ -51,7 +54,7 @@ class Market(object):
 
     def get_trades_frame(self, limit=None, kind='auth', since=None, pair=None):
         """Get a dataframe of the most recent trades."""
-        trades = self.main.get_trades(limit, kind, since, pair)
+        trades = self.get_trades(limit, kind, since, pair)
         df = pd.DataFrame(trades['trades'])
         if not df.empty:
             df.index = pd.to_datetime(df.timestamp, unit='ms')

@@ -1,23 +1,26 @@
+"""Base API Module."""
 from __future__ import absolute_import
 
-import json
 import logging
 from concurrent.futures import ThreadPoolExecutor
 
-import pandas as pd
 import requests
 
 from . import meta
 from .accounts import Account
 from .market import Market
-from .utils import LunoAPIError, LunoAPIRateLimitError, RateLimiter
+from .orders import Orders
+from .quotes import Quotes
+from .receive import Receive
+from .utils import LunoAPIError, LunoAPIRateLimitError, RateLimiter, deprecated
+from .withdrawl import Withdrawl
 
 __version__ = meta.__version__
 
 log = logging.getLogger(__name__)
 
 
-class Luno():
+class Luno(object):
     """Main Luno API class."""
 
     def __init__(self, key, secret, options={}):
@@ -32,7 +35,7 @@ class Luno():
         self.pair = options['pair'] if 'pair' in options else 'XBTZAR'
         self.ca = options['ca'] if 'ca' in options else None
         self.timeout = options['timeout'] if 'timeout' in options else 30
-        self.maxRate = options['maxRate'] if 'maxRate' in options else 1
+        self.maxRate = options['maxRate'] if 'maxRate' in options else 0.1
         self.maxBurst = options['maxBurst'] if 'maxBurst' in options else 5
         self.headers = {
             'Accept': 'application/json',
@@ -44,9 +47,13 @@ class Luno():
         self._requests_session = requests.Session()
         self._requests_session.headers.update(self.headers)
         self._executor = ThreadPoolExecutor(max_workers=5)
-        self.market = Market(self)
-        self.account = Account(self)
 
+        self.account = Account(self)
+        self.market = Market(self)
+        self.orders = Orders(self)
+        self.quotes = Quotes(self)
+        self.receive = Receive(self)
+        self.withdrawal = Withdrawl(self)
 
     def close(self):
         """Close connection."""
@@ -101,169 +108,6 @@ class Luno():
         else:
             return result
 
-    def create_limit_order(self, order_type, volume, price):
-        """Create a new limit order.
-
-        :param order_type: 'buy' or 'sell'
-        :param volume: the volume, in BTC
-        :param price: the ZAR price per bitcoin
-        :return: the order id
-        """
-        data = {
-            'pair': self.pair,
-            'type': 'BID' if order_type == 'buy' else 'ASK',
-            'volume': str(volume),
-            'price': str(price)
-
-        }
-        result = self.api_request('postorder', params=data, http_call='post')
-        return result
-
-    def create_market_order(self, order_type, volume, base_account_id,
-                            counter_account_id):
-        """Create a new market order.
-
-        :param order_type: 'buy' or 'sell'
-        :param volume: the volume of btc if sell, or currency if buy.
-        :return: the order id
-        """
-        data = {
-            'pair': self.pair,
-            'type': 'BUY' if order_type == 'buy' else 'SELL',
-            'volume': str(volume),
-        }
-        if order_type is 'buy':
-            data['couter_volume'] = volume
-        else:
-            data['base_volume'] = volume
-        result = self.api_request('marketorder', params=data, http_call='post')
-        return result
-
-    def stop_order(self, order_id):
-        """Stop a specific order.
-
-        :param order_id: The order ID
-        :return: a success flag
-        """
-        data = {
-            'order_id': order_id,
-        }
-        return self.api_request('stoporder', params=data, http_call='post')
-
-    def stop_all_orders(self):
-        """Stop all pending orders, both sell and buy.
-
-        :return: dict of Boolean -- whether request succeeded or not for each
-            order_id that was pending
-        """
-        pending = self.get_orders('PENDING')['orders']
-        ids = [order['order_id'] for order in pending]
-        result = {}
-        for order_id in ids:
-            status = self.stop_order(order_id)
-            result[order_id] = status['success']
-        return result
-
-    def get_order(self, order_id):
-        """Get an order by its ID.
-
-        :param order_id: string	The order ID
-        :return: dict order details or LunoAPIError raised
-        """
-        return self.api_request('orders/%s' % (order_id,), None)
-
-    def list_trades(self, limit=None, since=None, pair=None):
-        """Get list of all trades."""
-        params = {'pair': self.pair if pair is None else pair}
-        if since is not None:
-            params['since'] = since
-        trades = self.api_request('listtrades', params)
-        if limit is not None:
-            trades['trades'] = trades['trades'][:limit]
-        return trades
-
-    def list_trades_frame(self, limit=None, since=None, pair=None):
-        """Get dataframe of all trades."""
-        trades = self.list_trades(limit, since, pair)
-        df = pd.DataFrame(trades['trades'])
-        if not df.empty:
-            df.index = pd.to_datetime(df.timestamp, unit='ms')
-            df.price = df.price.apply(pd.to_numeric)
-            df.volume = df.volume.apply(pd.to_numeric)
-            df.base = df.base.apply(pd.to_numeric)
-            df.counter = df.counter.apply(pd.to_numeric)
-            df.fee_base = df.fee_base.apply(pd.to_numeric)
-            df.drop('timestamp', axis=1, inplace=True)
-        else:
-            log.warning('Empty response from list_trades. Returning empty df')
-        return df
-
-    def get_fee_info(self, kind='auth', pair=None):
-        """Get the fee info for the account."""
-        params = {'pair': self.pair if pair is None else pair}
-        return self.api_request('fee_info', params, kind=kind)
-
-    def get_receive_address(self, asset, address=None, kind='auth'):
-        """Get receive address for the account.
-
-        Returns the default receive address associated with your account
-        and the amount received via the address. You can specify an
-        optional address parameter to return information for a
-        non-default receive address. In the response, total_received
-        is the total confirmed Bitcoin amount received excluding
-        unconfirmed transactions. total_unconfirmed is the total
-        sum of unconfirmed receive transactions.
-        """
-        params = {'asset': asset,
-                  'address': address}
-        return self.api_request('funding_address', params, kind=kind)
-
-    def create_receive_address(self, asset='XBT'):
-        """Create a receive address.
-
-        Allocates a new receive address to your account.
-        There is a rate limit of 1 address per hour,
-        but bursts of up to 10 addresses are allowed.
-        """
-        data = {
-            'asset': asset,
-        }
-        result = self.api_request('funding_address',
-                                  params=data, http_call='post')
-        return result
-
-    def list_withdrawal_requests(self):
-        """Get list of withdrawal requests."""
-        trades = self.api_request('withdrawals')
-        return trades
-
-    def create_withdrawal_request(self, wtype, amount, beneficiary_id=None):
-        """Create a new withdrawal request."""
-        data = {
-            'type': wtype,
-            'amount': amount,
-            'beneficiary_id': beneficiary_id,
-        }
-        result = self.api_request('withdrawals',
-                                  params=data, http_call='post')
-        return result
-
-    def get_withdrawals_status(self, wid=None):
-        """Get status od specific withdrawal.
-
-        :param wid: String.
-        :return:
-        """
-        data = {'id': wid}
-        return self.api_request('withdrawals', params=data)
-
-    def delete_withdrawal_request(self, wid):
-        """Delete a new withdrawal request."""
-        data = {'id': wid}
-        result = self.api_request('withdrawals',
-                                  params=data, http_call='delete')
-        return result
-
     def send_bitcoin(self, amount, currency, address,
                      description=None, message=None):
         """Send currency to account."""
@@ -277,49 +121,30 @@ class Luno():
         result = self.api_request('send', params=data, http_call='post')
         return result
 
-    def transfer(self, amount, currency, note,
-                 source_account_id, target_account_id):
-        """Transfer currency between accounts."""
-        data = {
-            'amount': amount,
-            'currency': currency,
-            'note': note,
-            'source_account_id': source_account_id,
-            'target_account_id': target_account_id,
-        }
-        result_req = self.api_request('transfers', params=data,
-                                      http_call='post')
-        tx_id = result_req['id']
-        data = tx_id
-        result_app = self.api_request('transfers', params=data,
-                                      http_call='put')
-        return [result_req, result_app]
-
-    def get_quote(self, ttype, base_amount, pair):
-        """Get temporary quote."""
-        data = {
-            'type': ttype,
-            'base_amount': base_amount,
-            'pair': pair,
-        }
-        result = self.api_request('quotes', params=data, http_call='post')
-        return result
-
-    def get_quote_status(self, wid):
-        """Get status of a specific quote."""
-        data = {'id': wid}
-        result = self.api_request('quotes',
-                                  params=data)
-        return result
-
-    def execute_quote(self, wid):
-        """Execute trade based on quote."""
-        data = {'id': wid}
-        result = self.api_request('quotes', params=data, http_call='put')
-        return result
-
-    def delete_quote(self, wid):
-        """Delete quote."""
-        data = {'id': wid}
-        result = self.api_request('quotes', params=data, http_call='delete')
-        return result
+    # @deprecated('Use account.create_account instead')
+    # def create_account(self, *args, **kwargs):
+    #     return self.account.create_account(args, kwargs)
+    #
+    # @deprecated('Use account.get_balance instead')
+    # def get_balance(self):
+    #     return self.account.get_balance()
+    #
+    # @deprecated('Use account.get_transactions instead')
+    # def get_transactions(self, *args, **kwargs):
+    #     return self.account.get_transactions(args, kwargs)
+    #
+    # @deprecated('Use account.get_transactions_frame instead')
+    # def get_transactions_frame(self, *args, **kwargs):
+    #     return self.account.get_transactions_frame(args, kwargs)
+    #
+    # @deprecated('Use account.get_pending_transactions instead')
+    # def get_pending_transactions(self, *args, **kwargs):
+    #     return self.account.get_pending_transactions(args, kwargs)
+    #
+    # @deprecated('Use account.get_orders instead')
+    # def get_orders(self, *args, **kwargs):
+    #     return self.account.get_orders(args, kwargs)
+    #
+    # @deprecated('Use account.get_orders instead')
+    # def get_orders(self, *args, **kwargs):
+    #     return self.account.get_orders(args, kwargs)

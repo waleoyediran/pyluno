@@ -1,11 +1,14 @@
+"""Accounts Module."""
 import json
 
 import pandas as pd
 
 
 class Account(object):
+    """Class with the account methods."""
 
     def __init__(self, main):
+        """Initialise with super's main."""
         self.main = main
 
     def create_account(self, currency, name, base_account_id, counter_id):
@@ -41,7 +44,7 @@ class Account(object):
 
     def get_transactions_frame(self, account_id, min_row=None, max_row=None):
         """Get dataframe of transactions for an account."""
-        tx = self.main.get_transactions(
+        tx = self.get_transactions(
             account_id, min_row, max_row)['transactions']
         df = pd.DataFrame(tx)
         df.index = pd.to_datetime(df.timestamp, unit='ms')
@@ -50,9 +53,10 @@ class Account(object):
 
     def get_pending_transactions(self, account_id):
         """Get a list of pending transactions for an account."""
-        return self.main.api_request('accounts/%s/pending' % (account_id,), None)
+        return self.main.api_request(
+            'accounts/%s/pending' % (account_id,), None)
 
-    def get_orders(self, state=None, kind='auth', pair=None):
+    def get_orders(self, state=None, pair=None):
         """Get a list of most recently placed orders.
 
         You can specify an optional state='PENDING' parameter to
@@ -67,13 +71,31 @@ class Account(object):
         params = {'pair': self.main.pair if pair is None else pair}
         if state is not None:
             params['state'] = state
-        return self.main.api_request('listorders', params, kind=kind)
+        return self.main.api_request('listorders', params)
 
     def get_orders_frame(self, state=None, kind='auth', pair=None):
         """Get a list of most recently placed orders as a dataframe."""
-        q = self.main.get_orders(state, kind, pair)
+        q = self.get_orders(state, kind, pair)
         tj = json.dumps(q['orders'])
         df = pd.read_json(
             tj, convert_dates=['creation_timestamp', 'expiration_timestamp'])
         df.index = df.creation_timestamp
         return df
+
+    def transfer(self, amount, currency, note,
+                 source_account_id, target_account_id):
+        """Transfer currency between accounts."""
+        data = {
+            'amount': amount,
+            'currency': currency,
+            'note': note,
+            'source_account_id': source_account_id,
+            'target_account_id': target_account_id,
+        }
+        result_req = self.main.api_request('transfers', params=data,
+                                           http_call='post')
+        tx_id = result_req['id']
+        data = tx_id
+        result_app = self.main.api_request('transfers', params=data,
+                                           http_call='put')
+        return [result_req, result_app]
