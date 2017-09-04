@@ -69,7 +69,8 @@ class Luno(object):
         return "https://%s/api/1/%s" % (base, call)
 
     @RateLimiter
-    def api_request(self, call, params, kind='auth', http_call='get'):
+    def api_request(self, call, params=None, data=None,
+                    kind='auth', http_call='get'):
         """General API request.
 
         Generally, use the convenience functions below
@@ -82,20 +83,9 @@ class Luno(object):
         """
         url = self.construct_url(call)
         auth = self.auth if kind == 'auth' else None
-        if http_call == 'get':
-            response = self._requests_session.get(
-                url, params=params, auth=auth, timeout=self.timeout)
-        elif http_call == 'post':
-            response = self._requests_session.post(
-                url, data=params, auth=auth, timeout=self.timeout)
-        elif http_call == 'put':
-            response = self._requests_session.put(
-                url+'/'+params, auth=auth, timeout=self.timeout)
-        elif http_call == 'delete':
-            response = self._requests_session.delete(
-                url+'/'+params, auth=auth, timeout=self.timeout)
-        else:
-            raise ValueError('Invalid http_call parameter')
+        response = self._requests_session.request(
+            http_call.upper(),
+            url, params=params, data=data, auth=auth, timeout=self.timeout)
         try:
             result = response.json()
         except ValueError:

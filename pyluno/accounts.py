@@ -26,7 +26,7 @@ class Account(object):
             'base_account_id': base_account_id,
             'counter_id': counter_id
         }
-        return self.main.api_request('accounts', params=data, http_call='post')
+        return self.main.api_request('accounts', data=data, http_call='post')
 
     def get_balance(self):
         """Get balances of all accounts."""
@@ -92,10 +92,10 @@ class Account(object):
             'source_account_id': source_account_id,
             'target_account_id': target_account_id,
         }
-        result_req = self.main.api_request('transfers', params=data,
+        result_req = self.main.api_request('transfers', data=data,
                                            http_call='post')
         tx_id = result_req['id']
         data = tx_id
-        result_app = self.main.api_request('transfers', params=data,
+        result_app = self.main.api_request('transfers', data=data,
                                            http_call='put')
         return [result_req, result_app]

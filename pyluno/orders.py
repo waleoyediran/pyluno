@@ -13,7 +13,8 @@ class Orders(object):
         """Initialise with super's main."""
         self.main = main
 
-    def create_limit_order(self, order_type, volume, price):
+    def create_limit_order(self, order_type, volume, price,
+                           base_account_id, counter_account_id):
         """Create a new limit order.
 
         :param order_type: 'buy' or 'sell'
@@ -25,15 +26,16 @@ class Orders(object):
             'pair': self.main.pair,
             'type': 'BID' if order_type == 'buy' else 'ASK',
             'volume': str(volume),
-            'price': str(price)
-
+            'price': str(price),
+            'base_account_id': base_account_id,
+            'counter_account_id': counter_account_id,
         }
-        result = self.main.api_request('postorder', params=data,
+        result = self.main.api_request('postorder', data=data,
                                        http_call='post')
         return result
 
-    def create_market_order(self, order_type, volume, base_account_id,
-                            counter_account_id):
+    def create_market_order(self, order_type, volume,
+                            base_account_id, counter_account_id):
         """Create a new market order.
 
         :param order_type: 'buy' or 'sell'
@@ -44,12 +46,14 @@ class Orders(object):
             'pair': self.main.pair,
             'type': 'BUY' if order_type == 'buy' else 'SELL',
             'volume': str(volume),
+            'base_account_id': base_account_id,
+            'counter_account_id': counter_account_id,
         }
         if order_type is 'buy':
             data['couter_volume'] = volume
         else:
             data['base_volume'] = volume
-        result = self.main.api_request('marketorder', params=data,
+        result = self.main.api_request('marketorder', data=data,
                                        http_call='post')
         return result
 
@@ -62,7 +66,7 @@ class Orders(object):
         data = {
             'order_id': order_id,
         }
-        return self.main.api_request('stoporder', params=data,
+        return self.main.api_request('stoporder', data=data,
                                      http_call='post')
 
     def stop_all_orders(self):
@@ -85,16 +89,16 @@ class Orders(object):
         :param order_id: string	The order ID
         :return: dict order details or LunoAPIError raised
         """
-        return self.main.api_request('orders/%s' % (order_id,), None)
+        return self.main.api_request('orders/{}'.format(order_id))
 
     def list_trades(self, limit=None, since=None, pair=None):
         """Get list of all trades."""
+        params = {
+            'since': since,
+            'limit': limit,
+        }
         params = {'pair': self.main.pair if pair is None else pair}
-        if since is not None:
-            params['since'] = since
         trades = self.main.api_request('listtrades', params)
-        if limit is not None:
-            trades['trades'] = trades['trades'][:limit]
         return trades
 
     def list_trades_frame(self, limit=None, since=None, pair=None):

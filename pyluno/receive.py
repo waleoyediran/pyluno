@@ -34,5 +34,5 @@ class Receive(object):
             'asset': asset,
         }
         result = self.main.api_request('funding_address',
-                                       params=data, http_call='post')
+                                       data=data, http_call='post')
         return result

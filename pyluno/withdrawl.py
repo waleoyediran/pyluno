@@ -21,7 +21,7 @@ class Withdrawl(object):
             'beneficiary_id': beneficiary_id,
         }
         result = self.main.api_request('withdrawals',
-                                       params=data, http_call='post')
+                                       data=data, http_call='post')
         return result
 
     def get_withdrawals_status(self, wid=None):
