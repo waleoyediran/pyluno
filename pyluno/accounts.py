@@ -82,20 +82,20 @@ class Account(object):
         df.index = df.creation_timestamp
         return df
 
-    def transfer(self, amount, currency, note,
-                 source_account_id, target_account_id):
-        """Transfer currency between accounts."""
-        data = {
-            'amount': amount,
-            'currency': currency,
-            'note': note,
-            'source_account_id': source_account_id,
-            'target_account_id': target_account_id,
-        }
-        result_req = self.main.api_request('transfers', data=data,
-                                           http_call='post')
-        tx_id = result_req['id']
-        data = tx_id
-        result_app = self.main.api_request('transfers', data=data,
-                                           http_call='put')
-        return [result_req, result_app]
+    # def transfer(self, amount, currency, note,
+    #              source_account_id, target_account_id):
+    #     """Transfer currency between accounts."""
+    #     data = {
+    #         'amount': amount,
+    #         'currency': currency,
+    #         'note': note,
+    #         'source_account_id': source_account_id,
+    #         'target_account_id': target_account_id,
+    #     }
+    #     result_req = self.main.api_request('transfers', data=data,
+    #                                        http_call='post')
+    #     tx_id = result_req['id']
+    #     data = tx_id
+    #     result_app = self.main.api_request('transfers', data=data,
+    #                                        http_call='put')
+    #     return [result_req, result_app]
