@@ -26,9 +26,9 @@ def runDemo():
     print(api.market.get_order_book(5))
     print(api.market.get_trades(10))
     if auth:
-        print(api.get_orders())
-        print(api.get_funding_address('XBT'))
-        print(api.get_balance())
+        print(api.account.get_orders())
+        print(api.withdrawal.get_funding_address('XBT'))
+        print(api.account.get_balance())
 
 
 if __name__ == '__main__':
