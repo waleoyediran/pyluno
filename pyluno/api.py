@@ -12,7 +12,7 @@ from .market import Market
 from .orders import Orders
 from .quotes import Quotes
 from .receive import Receive
-from .utils import LunoAPIError, LunoAPIRateLimitError, RateLimiter, deprecated
+from .utils import LunoAPIError, LunoAPIRateLimitError, RateLimiter
 from .withdrawal import withdrawal
 
 __version__ = meta.__version__
