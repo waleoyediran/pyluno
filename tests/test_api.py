@@ -1,9 +1,11 @@
+import base64
 import unittest
+
+import pandas as pd
 import requests_mock
+
 from pyluno import api
 from pyluno.api import Luno, LunoAPIError
-import base64
-import pandas as pd
 
 
 # time.timestam
@@ -22,7 +24,9 @@ class TestLuno(unittest.TestCase):
         options = {
             'hostname': 'localhost',
             'port': 8000,
-            'pair': 'XBTUSD'
+            'pair': 'XBTUSD',
+            'maxRate': None,
+            'maxBurst': None,
         }
         key = 'cnz2yjswbv3jd'
         secret = '0hydMZDb9HRR3Qq-iqALwZtXLkbLR4fWxtDZvkB9h4I'
@@ -40,6 +44,8 @@ class TestLuno(unittest.TestCase):
     def testConstructURLWithHost(self):
         options = {
             'hostname': 'localhost',
+            'maxRate': None,
+            'maxBurst': None,
         }
         api = Luno('', '', options)
         url = api.construct_url('test')
@@ -47,7 +53,9 @@ class TestLuno(unittest.TestCase):
 
     def testConstructURLWithPort(self):
         options = {
-            'port': 40000
+            'port': 40000,
+            'maxRate': None,
+            'maxBurst': None,
         }
         api = Luno('', '', options)
         url = api.construct_url('test')
@@ -56,7 +64,9 @@ class TestLuno(unittest.TestCase):
     def testConstructURLWithPortAndHost(self):
         options = {
             'hostname': 'localhost',
-            'port': 40000
+            'port': 40000,
+            'maxRate': None,
+            'maxBurst': None,
         }
         api = Luno('', '', options)
         url = api.construct_url('test')
@@ -76,7 +86,9 @@ class TestAPICalls(unittest.TestCase):
     def setUp(self):
         options = {
             'hostname': 'api.dummy.com',
-            'pair': 'XBTZAR'
+            'pair': 'XBTZAR',
+            'maxRate': None,
+            'maxBurst': None,
         }
         key = 'mykey'
         secret = 'mysecret'
@@ -93,7 +105,7 @@ class TestAPICalls(unittest.TestCase):
         }
         m.get('https://api.dummy.com/api/1/ticker?pair=XBTZAR',
               json={'success': True}, headers=headers)
-        result = self.api.get_ticker()
+        result = self.api.market.get_ticker()
         self.assertTrue(result['success'])
 
     @requests_mock.Mocker()
@@ -106,7 +118,7 @@ class TestAPICalls(unittest.TestCase):
             "last_trade": "950.00"
         }
         m.get('https://api.dummy.com/api/1/ticker?pair=XBTZAR', json=response)
-        result = self.api.get_ticker()
+        result = self.api.market.get_ticker()
         self.assertDictEqual(result, response)
 
     @requests_mock.Mocker()
@@ -116,7 +128,7 @@ class TestAPICalls(unittest.TestCase):
         m.get('https://api.dummy.com/api/1/ticker', json=response)
         url = 'https://api.dummy.com/api/1/ticker'
         try:
-            self.api.get_ticker()
+            self.api.market.get_ticker()
             self.fail('Exception not thrown')
         except LunoAPIError as e:
             self.assertEqual(e.code, 200)
@@ -136,7 +148,7 @@ class TestAPICalls(unittest.TestCase):
              "rolling_24_hour_volume": "142.516363", "pair": "XBTZAR"}
         ]}
         m.get('https://api.dummy.com/api/1/tickers', json=response)
-        result = self.api.get_all_tickers()
+        result = self.api.market.get_all_tickers()
         self.assertDictEqual(result, response)
 
     @requests_mock.Mocker()
@@ -169,9 +181,9 @@ class TestAPICalls(unittest.TestCase):
             ]
         }
         m.get('https://api.dummy.com/api/1/orderbook', json=response)
-        result = self.api.get_order_book()
+        result = self.api.market.get_order_book()
         self.assertDictEqual(result, response)
-        result = self.api.get_order_book(1)
+        result = self.api.market.get_order_book(1)
         self.assertDictEqual(result, {
             "timestamp": 1366305398592,
             "bids": [
@@ -187,7 +199,7 @@ class TestAPICalls(unittest.TestCase):
                 }
             ]
         })
-        result = self.api.get_order_book_frame()
+        result = self.api.market.get_order_book_frame()
         self.assertDictEqual(
             result.bids.to_dict(),
             {'volume': {0: '0.10', 1: '0.10', 2: '0.10'},
@@ -211,11 +223,11 @@ class TestAPICalls(unittest.TestCase):
             ]
         }
         m.get('https://api.dummy.com/api/1/trades', json=response)
-        result = self.api.get_trades(since=123)
+        result = self.api.market.get_trades(since=123)
         self.assertDictEqual(result, response)
-        result = self.api.get_trades(1)
+        result = self.api.market.get_trades(1)
         self.assertDictEqual(result, {"trades": [response['trades'][0]]})
-        result = self.api.get_trades_frame(1)
+        result = self.api.market.get_trades_frame(1)
         self.assertDictEqual(
             result.to_dict(),
             {'price': {pd.Timestamp('2013-04-15 19:03:41.774000'): 1000.0},
@@ -224,7 +236,7 @@ class TestAPICalls(unittest.TestCase):
             )
         response = {'trades': []}
         m.get('https://api.dummy.com/api/1/trades', json=response)
-        result = self.api.get_trades_frame(1)
+        result = self.api.market.get_trades_frame(1)
         self.assertTrue(result.empty)
 
     @requests_mock.Mocker()
@@ -247,11 +259,11 @@ class TestAPICalls(unittest.TestCase):
             ]
         }
         m.get('https://api.dummy.com/api/1/listtrades', json=response)
-        result = self.api.list_trades(since=123)
+        result = self.api.orders.list_trades(since=123)
         self.assertDictEqual(result, response)
-        result = self.api.list_trades(1)
+        result = self.api.orders.list_trades(1)
         self.assertDictEqual(result, {"trades": [response['trades'][0]]})
-        result = self.api.list_trades_frame()
+        result = self.api.orders.list_trades_frame()
         d_comp = {pd.Timestamp('2016-06-28 18:28:12.909000'):
                   {'fee_counter': '0.00', 'fee_base': 0.0,
                    'pair': 'XBTZAR', 'counter': 1549.950831,
@@ -262,7 +274,7 @@ class TestAPICalls(unittest.TestCase):
             result.T.to_dict(), d_comp)
         response = {'trades': []}
         m.get('https://api.dummy.com/api/1/listtrades', json=response)
-        result = self.api.list_trades_frame(1)
+        result = self.api.orders.list_trades_frame(1)
         self.assertTrue(result.empty)
 
     @requests_mock.Mocker()
@@ -288,9 +300,9 @@ class TestAPICalls(unittest.TestCase):
         }
         url = 'https://api.dummy.com/api/1/listorders?pair=XBTZAR'
         m.get(url, json=response, headers={'Authorization': self.auth_string})
-        result = self.api.get_orders()
+        result = self.api.account.get_orders()
         self.assertDictEqual(result, response)
-        result = self.api.get_orders_frame()
+        result = self.api.account.get_orders_frame()
 
         d_comp = {pd.Timestamp('2015-02-15 08:52:07.333000'):
                   {'limit_volume': 0.027496,
@@ -307,7 +319,7 @@ class TestAPICalls(unittest.TestCase):
         url = 'https://api.dummy.com/api/1/listorders?pair=XBTZAR'
         m.get(url, text='', status_code=401)
         try:
-            self.api.get_orders(kind='basic')
+            self.api.account.get_orders()
             self.fail('Exception not thrown')
         except LunoAPIError as e:
             self.assertEqual(e.code, 401)
@@ -342,7 +354,7 @@ class TestAPICalls(unittest.TestCase):
         }
         url = 'https://api.dummy.com/api/1/orders/BXHW6PFRRXKFSB4'
         m.get(url, json=response, headers={'Authorization': self.auth_string})
-        result = self.api.get_order('BXHW6PFRRXKFSB4')
+        result = self.api.orders.get_order('BXHW6PFRRXKFSB4')
         self.assertDictEqual(result, response)
 
     @requests_mock.Mocker()
@@ -354,7 +366,7 @@ class TestAPICalls(unittest.TestCase):
                     "total_unconfirmed": "0.00"}
         url = 'https://api.dummy.com/api/1/funding_address?asset=XBT'
         m.get(url, json=response, headers={'Authorization': self.auth_string})
-        result = self.api.get_funding_address('XBT')
+        result = self.api.receive.get_receive_address('XBT')
         self.assertDictEqual(result, response)
 
     @requests_mock.Mocker()
@@ -373,15 +385,15 @@ class TestAPICalls(unittest.TestCase):
         }
         url = 'https://api.dummy.com/api/1/withdrawals'
         m.get(url, json=response, headers={'Authorization': self.auth_string})
-        result = self.api.get_withdrawals_status()
+        result = self.api.withdrawal.get_withdrawals_status()
         self.assertDictEqual(result, response)
 
     @requests_mock.Mocker()
     def testWithdrawalsStatusSpecific(self, m):
         response = {"status": "COMPLETED", "id": "1121"}
-        url = 'https://api.dummy.com/api/1/withdrawals/1121'
+        url = 'https://api.dummy.com/api/1/withdrawals?id=1121'
         m.get(url, json=response, headers={'Authorization': self.auth_string})
-        result = self.api.get_withdrawals_status('1121')
+        result = self.api.withdrawal.get_withdrawals_status('1121')
         self.assertDictEqual(result, response)
 
     @requests_mock.Mocker()
@@ -408,7 +420,7 @@ class TestAPICalls(unittest.TestCase):
         }
         url = 'https://api.dummy.com/api/1/balance'
         m.get(url, json=response, headers={'Authorization': self.auth_string})
-        result = self.api.get_balance()
+        result = self.api.account.get_balance()
         self.assertDictEqual(result, response)
 
     @requests_mock.Mocker()
@@ -446,22 +458,22 @@ class TestAPICalls(unittest.TestCase):
               json={"id": "319232323",
                     "transactions": [trec[1]]},
               headers={'Authorization': self.auth_string})
-        result = self.api.get_transactions('319232323')
+        result = self.api.account.get_transactions('319232323')
         self.assertDictEqual(result,
                              {"id": "319232323", "transactions": trec})
-        result = self.api.get_transactions('319232323', max_row=1)
+        result = self.api.account.get_transactions('319232323', max_row=1)
         self.assertDictEqual(result,
                              {"id": "319232323", "transactions": [trec[0]]})
-        result = self.api.get_transactions('319232323', 1, 1)
+        result = self.api.account.get_transactions('319232323', 1, 1)
         self.assertDictEqual(result,
                              {"id": "319232323", "transactions": [trec[0]]})
-        result = self.api.get_transactions('319232323', min_row=2)
+        result = self.api.account.get_transactions('319232323', min_row=2)
         self.assertDictEqual(result,
                              {"id": "319232323", "transactions": [trec[1]]})
-        result = self.api.get_transactions('319232323', 2, 2)
+        result = self.api.account.get_transactions('319232323', 2, 2)
         self.assertDictEqual(result,
                              {"id": "319232323", "transactions": [trec[1]]})
-        result = self.api.get_transactions_frame('319232323', 2, 2)
+        result = self.api.account.get_transactions_frame('319232323', 2, 2)
         d_comp = {pd.Timestamp('2015-04-24 20:51:41'):
                   {'row_index': 1, 'description': 'Bought 0.1 BTC',
                    'balance_delta': 0.1, 'currency': 'XBT',
@@ -486,7 +498,7 @@ class TestAPICalls(unittest.TestCase):
         }
         url = 'https://api.dummy.com/api/1/accounts/319232323/pending'
         m.get(url, json=response, headers={'Authorization': self.auth_string})
-        result = self.api.get_pending_transactions('319232323')
+        result = self.api.account.get_pending_transactions('319232323')
         self.assertDictEqual(result, response)
 
     @requests_mock.Mocker()
@@ -496,7 +508,7 @@ class TestAPICalls(unittest.TestCase):
         }
         url = 'https://api.dummy.com/api/1/postorder'
         m.post(url, json=response, headers={'Authorization': self.auth_string})
-        result = self.api.create_limit_order('buy', 0.1, 500)
+        result = self.api.orders.create_limit_order('buy', 0.1, 500, 123, 456)
         data = {s.split('=')[0]: s.split('=')[1]
                 for s in m.request_history[0].text.split('&')}
         self.assertEqual(data['pair'], 'XBTZAR')
@@ -511,7 +523,7 @@ class TestAPICalls(unittest.TestCase):
         }
         url = 'https://api.dummy.com/api/1/marketorder'
         m.post(url, json=response, headers={'Authorization': self.auth_string})
-        result = self.api.create_market_order('buy', 0.1)
+        result = self.api.orders.create_market_order('buy', 0.1, 123, 456)
         data = {s.split('=')[0]: s.split('=')[1]
                 for s in m.request_history[0].text.split('&')}
         self.assertEqual(data['pair'], 'XBTZAR')
@@ -527,7 +539,7 @@ class TestAPICalls(unittest.TestCase):
         }
         url = 'https://api.dummy.com/api/1/accounts'
         m.post(url, json=response, headers={'Authorization': self.auth_string})
-        result = self.api.create_account('XBT', 'Moon')
+        result = self.api.account.create_account('XBT', 'Moon', 123, 456)
         self.assertDictEqual(result, result)
 
 

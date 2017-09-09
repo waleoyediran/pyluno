@@ -36,13 +36,13 @@ Where `options` is  dictions and can have any of the following keys and associat
 
 ### Latest ticker
 
-    api.get_ticker()
+    api.market.get_ticker()
 
 **Returns**: dictionary containing the latest ticker values
 
 ### All tickers
 
-    api.get_all_tickers()
+    api.market.get_all_tickers()
 
 **Returns**: dictionary containing the latest ticker values for all currency pairs
 
