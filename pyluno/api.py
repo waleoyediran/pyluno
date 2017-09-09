@@ -13,7 +13,7 @@ from .orders import Orders
 from .quotes import Quotes
 from .receive import Receive
 from .utils import LunoAPIError, LunoAPIRateLimitError, RateLimiter, deprecated
-from .withdrawl import Withdrawl
+from .withdrawal import withdrawal
 
 __version__ = meta.__version__
 
@@ -53,7 +53,7 @@ class Luno(object):
         self.orders = Orders(self)
         self.quotes = Quotes(self)
         self.receive = Receive(self)
-        self.withdrawal = Withdrawl(self)
+        self.withdrawal = withdrawal(self)
 
     def close(self):
         """Close connection."""

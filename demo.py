@@ -1,17 +1,8 @@
+from __future__ import print_function
+
 import os
-import pprint
 
 from pyluno.api import Luno
-
-pp = pprint.PrettyPrinter(indent=4, width=80)
-
-
-def format_call(name, results):
-    print('-'*80)
-    print('%50s' % (name,))
-    print('-'*80)
-    pp.pprint(results)
-    print('-'*80)
 
 
 def runDemo():
@@ -22,23 +13,22 @@ def runDemo():
         user = os.environ['BITX_KEY']
         password = os.environ['BITX_SECRET']
     else:
-        print("Note: I couldn't find a BITX_KEY environment variable."
+        print("Note: Couldn't find a BITX_KEY environment variable."
               " This means that none of the API queries that"
               " require authentication will work."
-              " I'll carry on anyway, but make sure your"
+              " Carrying on anyway, but make sure your"
               " credentials are available "
               " in the BITX_KEY and BITX_SECRET environment variables"
               " and run this demo again")
     api = Luno(user, password)
-    kind = 'auth' if auth else 'none'
-    format_call('  Ticker   ', api.get_ticker(kind))
-    format_call('All Tickers', api.get_all_tickers(kind))
-    format_call('Order book ', api.get_order_book(5, kind))
-    format_call('   Trades  ', api.get_trades(10, kind))
+    print(api.market.get_ticker())
+    print(api.market.get_all_tickers())
+    print(api.market.get_order_book(5))
+    print(api.market.get_trades(10))
     if auth:
-        format_call('   Orders  ', api.get_orders())
-        format_call('Funding address', api.get_funding_address('XBT'))
-        format_call('   Balance ', api.get_balance())
+        print(api.get_orders())
+        print(api.get_funding_address('XBT'))
+        print(api.get_balance())
 
 
 if __name__ == '__main__':

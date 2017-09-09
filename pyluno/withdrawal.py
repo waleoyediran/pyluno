@@ -1,8 +1,8 @@
-"""Withdrawl Module."""
+"""withdrawal Module."""
 
 
-class Withdrawl(object):
-    """Withdrawl methods."""
+class withdrawal(object):
+    """withdrawal methods."""
 
     def __init__(self, main):
         """Initialise with super's main."""

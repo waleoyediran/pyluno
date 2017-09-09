@@ -75,27 +75,32 @@ class Account(object):
 
     def get_orders_frame(self, state=None, kind='auth', pair=None):
         """Get a list of most recently placed orders as a dataframe."""
-        q = self.get_orders(state, kind, pair)
+        q = self.get_orders(state, pair)
         tj = json.dumps(q['orders'])
         df = pd.read_json(
             tj, convert_dates=['creation_timestamp', 'expiration_timestamp'])
         df.index = df.creation_timestamp
         return df
 
-    # def transfer(self, amount, currency, note,
-    #              source_account_id, target_account_id):
-    #     """Transfer currency between accounts."""
-    #     data = {
-    #         'amount': amount,
-    #         'currency': currency,
-    #         'note': note,
-    #         'source_account_id': source_account_id,
-    #         'target_account_id': target_account_id,
-    #     }
-    #     result_req = self.main.api_request('transfers', data=data,
-    #                                        http_call='post')
-    #     tx_id = result_req['id']
-    #     data = tx_id
-    #     result_app = self.main.api_request('transfers', data=data,
-    #                                        http_call='put')
-    #     return [result_req, result_app]
+    def create_transfer(self, amount, currency, note,
+                        source_account_id, target_account_id):
+        """Transfer currency between accounts."""
+        data = {
+            'amount': amount,
+            'currency': currency,
+            'note': note,
+            'source_account_id': source_account_id,
+            'target_account_id': target_account_id,
+        }
+        return self.main.api_request('transfers', data=data,
+                                     http_call='post')
+
+    def get_transfers(self, tid=None):
+        """Get list of transfers."""
+        return self.main.api_request('transfers/{}'.format(tid or ''),
+                                     http_call='get')
+
+    def confirm_transfer(self, tid):
+        """Confirm a pending transfer."""
+        return self.main.api_request('transfers/{}'.format(tid),
+                                     http_call='put')

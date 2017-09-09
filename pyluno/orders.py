@@ -103,7 +103,7 @@ class Orders(object):
 
     def list_trades_frame(self, limit=None, since=None, pair=None):
         """Get dataframe of all trades."""
-        trades = self.main.list_trades(limit, since, pair)
+        trades = self.list_trades(limit, since, pair)
         df = pd.DataFrame(trades['trades'])
         if not df.empty:
             df.index = pd.to_datetime(df.timestamp, unit='ms')
