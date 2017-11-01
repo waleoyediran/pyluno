@@ -39,3 +39,18 @@ class withdrawal(object):
         result = self.main.api_request('withdrawals',
                                        params=data, http_call='delete')
         return result
+
+    def get_funding_address(self, asset, address=None):
+        """Returns the default receive address associated with your account and the amount received via the address. You
+        can specify an optional address parameter to return information for a non-default receive address. In the
+        response, total_received is the total confirmed Bitcoin amount received excluding unconfirmed transactions.
+        total_unconfirmed is the total sum of unconfirmed receive transactions.
+        :param asset: For now, only XBT is valid.
+        :param address: Optional receive address.
+        :return: dict
+        """
+        data = {'asset': asset}
+        if address is not None:
+            data['address'] = address
+        result = self.main.api_request('funding_address', params=data)
+        return result
